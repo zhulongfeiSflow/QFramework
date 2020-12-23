@@ -44,14 +44,15 @@ namespace QFramework
         {
             State = ResState.Loading;
 
-            var dependencyBundleNames = Manifest.GetDirectDependencies(Name);
+            // var dependencyBundleNames = Manifest.GetDirectDependencies(Name);
+            var dependencyBundleNames = ResData.Instance.GetDirectDependencies(Name);
 
             foreach (var dependencyBundleName in dependencyBundleNames)
             {
                 mResLoader.LoadSync<AssetBundle>(dependencyBundleName);
             }
 
-            AssetBundle = AssetBundle.LoadFromFile(mPath);
+            // AssetBundle = AssetBundle.LoadFromFile(mPath);
 
             State = ResState.Loaded;
 
@@ -77,8 +78,7 @@ namespace QFramework
 
         private void LoadDependencyBundlesAsync(Action onAllLoaded)
         {
-            var dependencyBundleNames =
-                Manifest.GetDirectDependencies(Name);
+            var dependencyBundleNames = Manifest.GetDirectDependencies(Name);
 
             var loadedCount = 0;
 

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Linq;
+using UnityEngine;
 
 namespace QFramework
 {
@@ -14,26 +15,28 @@ namespace QFramework
 
             State = ResState.Waiting;
         }
-        
+
         ResLoader mResLoader = new ResLoader();
-        
+
         public override bool LoadSync()
         {
             State = ResState.Loading;
-            
+#if UNITY_EDITOR
+            var assetPath = UnityEditor.AssetDatabase.GetAssetPathsFromAssetBundleAndAssetName(mOwnerBundleName, Name);
             var ownerBundle = mResLoader.LoadSync<AssetBundle>(mOwnerBundleName);
-            
-            Asset = ownerBundle.LoadAsset(Name);
-            
+            Asset = UnityEditor.AssetDatabase.LoadAssetAtPath<Object>(assetPath.First());
+#endif
+            // Asset = ownerBundle.LoadAsset(Name);
+
             State = ResState.Loaded;
-            
+
             return Asset;
         }
 
         public override void LoadAsync()
         {
             State = ResState.Loading;
-            
+
             mResLoader.LoadAsync<AssetBundle>(mOwnerBundleName, ownerBundle =>
             {
                 var assetBundleRequest = ownerBundle.LoadAssetAsync(Name);
@@ -51,14 +54,13 @@ namespace QFramework
         {
             if (Asset is GameObject)
             {
-                
             }
             else
             {
                 Resources.UnloadAsset(Asset);
                 Asset = null;
             }
-            
+
             mResLoader.ReleaseAll();
             mResLoader = null;
 

@@ -1,17 +1,21 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace QFramework
 {
-    public class NewBehaviourScript : MonoBehaviour
+    public class ResData : Singleton<ResData>
     {
-#if UNITY_EDITOR
-        [UnityEditor.MenuItem("QFramework/Playground")]
-        static void Test()
+        private ResData()
         {
-            ResData resData = ResData.Instance;
-            resData.AssetBundleDatas.Clear();
-            
+            Load();
+        }
+
+        public List<AssetBundleData> AssetBundleDatas = new List<AssetBundleData>();
+
+        private void Load()
+        {
+#if UNITY_EDITOR
             var assetBundleNames = UnityEditor.AssetDatabase.GetAllAssetBundleNames();
             
             foreach (var assetBundleName in assetBundleNames)
@@ -35,10 +39,10 @@ namespace QFramework
                     assetBundleData.AssetDataList.Add(assetData);
                 }
                 
-                resData.AssetBundleDatas.Add(assetBundleData);
+                AssetBundleDatas.Add(assetBundleData);
             }
 
-            resData.AssetBundleDatas.ForEach(abData =>
+            AssetBundleDatas.ForEach(abData =>
             {
                 Debug.LogFormat("-------{0}---------", abData.Name);
                 abData.AssetDataList.ForEach(assetData =>
@@ -51,7 +55,14 @@ namespace QFramework
                     Debug.LogFormat("AB:{0},Depend:{1}", abData.Name, dependencyBundleName);
                 }
             });
-        }
 #endif
+        }
+
+        public string[] GetDirectDependencies(string bundleName)
+        {
+            return AssetBundleDatas
+                .Find(abData => abData.Name == bundleName)
+                .DependencyBundleNames;
+        }
     }
 }

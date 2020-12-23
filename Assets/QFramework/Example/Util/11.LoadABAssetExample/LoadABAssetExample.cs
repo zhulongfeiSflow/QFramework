@@ -19,13 +19,13 @@ namespace QFramework
         
         private void Start()
         {
-            var square = mResLoader.LoadSync<Texture2D>("square", "Square.png");
+            var square = mResLoader.LoadSync<Texture2D>("square", "Square");
             Debug.Log(square.name);
             
-            mResLoader.LoadAsync<GameObject>("gameobject", "GameObject.prefab", prefab =>
-            {
-                Instantiate(prefab);
-            });
+            // mResLoader.LoadAsync<GameObject>("gameobject", "GameObject.prefab", prefab =>
+            // {
+            //     Instantiate(prefab);
+            // });
         }
 
         private void OnDestroy()
