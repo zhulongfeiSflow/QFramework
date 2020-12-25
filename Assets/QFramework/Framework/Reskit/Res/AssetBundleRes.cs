@@ -5,24 +5,6 @@ namespace QFramework
 {
     public class AssetBundleRes : Res
     {
-        private static AssetBundleManifest mManifest;
-
-        private static AssetBundleManifest Manifest
-        {
-            get
-            {
-                if (!mManifest)
-                {
-                    var mainBundle =
-                        AssetBundle.LoadFromFile(
-                            ReskitUtil.FullPathForAssetBundle(ReskitUtil.GetPlatformName()));
-                    mManifest = mainBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
-                }
-
-                return mManifest;
-            }
-        }
-
         private AssetBundle AssetBundle
         {
             get => Asset as AssetBundle;
@@ -44,7 +26,6 @@ namespace QFramework
         {
             State = ResState.Loading;
 
-            // var dependencyBundleNames = Manifest.GetDirectDependencies(Name);
             var dependencyBundleNames = ResData.Instance.GetDirectDependencies(Name);
 
             foreach (var dependencyBundleName in dependencyBundleNames)
@@ -52,7 +33,10 @@ namespace QFramework
                 mResLoader.LoadSync<AssetBundle>(dependencyBundleName);
             }
 
-            // AssetBundle = AssetBundle.LoadFromFile(mPath);
+            if (!ResMgr.IsSimulationModeLogic)
+            {
+                AssetBundle = AssetBundle.LoadFromFile(mPath);
+            }
 
             State = ResState.Loaded;
 
@@ -65,20 +49,27 @@ namespace QFramework
 
             LoadDependencyBundlesAsync(() =>
             {
-                var resRequest = AssetBundle.LoadFromFileAsync(mPath);
-
-                resRequest.completed += operation =>
+                if (ResMgr.IsSimulationModeLogic)
                 {
-                    AssetBundle = resRequest.assetBundle;
-
                     State = ResState.Loaded;
-                };
+                }
+                else
+                {
+                    var resRequest = AssetBundle.LoadFromFileAsync(mPath);
+
+                    resRequest.completed += operation =>
+                    {
+                        AssetBundle = resRequest.assetBundle;
+
+                        State = ResState.Loaded;
+                    };
+                }
             });
         }
 
         private void LoadDependencyBundlesAsync(Action onAllLoaded)
         {
-            var dependencyBundleNames = Manifest.GetDirectDependencies(Name);
+            var dependencyBundleNames = ResData.Instance.GetDirectDependencies(Name);
 
             var loadedCount = 0;
 

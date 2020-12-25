@@ -12,57 +12,74 @@ namespace QFramework
         }
 
         public List<AssetBundleData> AssetBundleDatas = new List<AssetBundleData>();
+        private static AssetBundleManifest mManifest;
 
         private void Load()
         {
-#if UNITY_EDITOR
-            var assetBundleNames = UnityEditor.AssetDatabase.GetAllAssetBundleNames();
-            
-            foreach (var assetBundleName in assetBundleNames)
+            if (ResMgr.IsSimulationModeLogic)
             {
-                var assetBundleData = new AssetBundleData()
-                {
-                    Name = assetBundleName,
-                    DependencyBundleNames = UnityEditor.AssetDatabase.GetAssetBundleDependencies(assetBundleName, false),
-                };
-                
-                var assetPaths = UnityEditor.AssetDatabase.GetAssetPathsFromAssetBundle(assetBundleName);
+#if UNITY_EDITOR
+                var assetBundleNames = UnityEditor.AssetDatabase.GetAllAssetBundleNames();
 
-                foreach (var assetPath in assetPaths)
+                foreach (var assetBundleName in assetBundleNames)
                 {
-                    AssetData assetData = new AssetData()
+                    var assetBundleData = new AssetBundleData()
                     {
-                        Name = assetPath.Split('/').Last().Split('.').First(),
-                        OwnerBundleName = assetBundleName,
+                        Name = assetBundleName,
+                        DependencyBundleNames =
+                            UnityEditor.AssetDatabase.GetAssetBundleDependencies(assetBundleName, false),
                     };
 
-                    assetBundleData.AssetDataList.Add(assetData);
-                }
-                
-                AssetBundleDatas.Add(assetBundleData);
-            }
+                    var assetPaths = UnityEditor.AssetDatabase.GetAssetPathsFromAssetBundle(assetBundleName);
 
-            AssetBundleDatas.ForEach(abData =>
-            {
-                Debug.LogFormat("-------{0}---------", abData.Name);
-                abData.AssetDataList.ForEach(assetData =>
+                    foreach (var assetPath in assetPaths)
+                    {
+                        AssetData assetData = new AssetData()
+                        {
+                            Name = assetPath.Split('/').Last().Split('.').First(),
+                            OwnerBundleName = assetBundleName,
+                        };
+
+                        assetBundleData.AssetDataList.Add(assetData);
+                    }
+
+                    AssetBundleDatas.Add(assetBundleData);
+                }
+
+                AssetBundleDatas.ForEach(abData =>
                 {
-                    Debug.LogFormat("AB:{0},AssetData:{1}", abData.Name, assetData.Name);
+                    Debug.LogFormat("-------{0}---------", abData.Name);
+                    abData.AssetDataList.ForEach(assetData =>
+                    {
+                        Debug.LogFormat("AB:{0},AssetData:{1}", abData.Name, assetData.Name);
+                    });
+
+                    foreach (var dependencyBundleName in abData.DependencyBundleNames)
+                    {
+                        Debug.LogFormat("AB:{0},Depend:{1}", abData.Name, dependencyBundleName);
+                    }
                 });
-
-                foreach (var dependencyBundleName in abData.DependencyBundleNames)
-                {
-                    Debug.LogFormat("AB:{0},Depend:{1}", abData.Name, dependencyBundleName);
-                }
-            });
 #endif
+            }
+            else
+            {
+                var mainBundle =
+                    AssetBundle.LoadFromFile(
+                        ReskitUtil.FullPathForAssetBundle(ReskitUtil.GetPlatformName()));
+                mManifest = mainBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
+            }
         }
 
         public string[] GetDirectDependencies(string bundleName)
         {
-            return AssetBundleDatas
-                .Find(abData => abData.Name == bundleName)
-                .DependencyBundleNames;
+            if (ResMgr.IsSimulationModeLogic)
+            {
+                return AssetBundleDatas
+                    .Find(abData => abData.Name == bundleName)
+                    .DependencyBundleNames;
+            }
+
+            return mManifest.GetDirectDependencies(bundleName);
         }
     }
 }

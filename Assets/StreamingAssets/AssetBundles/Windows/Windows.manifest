@@ -1,0 +1,11 @@
+ManifestFileVersion: 0
+CRC: 2733567068
+AssetBundleManifest:
+  AssetBundleInfos:
+    Info_0:
+      Name: gameobject
+      Dependencies:
+        Dependency_0: square
+    Info_1:
+      Name: square
+      Dependencies: {}
