@@ -65,7 +65,7 @@ namespace QFramework
             {
                 var mainBundle =
                     AssetBundle.LoadFromFile(
-                        ReskitUtil.FullPathForAssetBundle(ReskitUtil.GetPlatformName()));
+                        ResKitUtil.FullPathForAssetBundle(ResKitUtil.GetPlatformName()));
                 mManifest = mainBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
             }
         }

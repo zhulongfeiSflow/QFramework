@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace QFramework
@@ -8,6 +9,8 @@ namespace QFramework
     public class ResVersion
     {
         public int Version;
+
+        public List<string> AssetBundleNames = new List<string>();
     }
 
     public class FakeResServer : MonoSingleton<FakeResServer>

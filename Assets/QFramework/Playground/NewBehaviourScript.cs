@@ -25,7 +25,7 @@ namespace QFramework
         [Test]
         public void PlayMode()
         {
-            Debug.Log(HotUpdateMgr.Instance.GetLocalResVersion());
+            // Debug.Log(HotUpdateMgr.Instance.GetLocalResVersion());
         }
 #endif
     }

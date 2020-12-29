@@ -2,17 +2,29 @@
 
 namespace QFramework
 {
-    public class ReskitUtil
+    public class ResKitUtil
     {
         public static string FullPathForAssetBundle(string assetBundleName)
         {
-            return Application.streamingAssetsPath + "/AssetBundles/" + GetPlatformName() + "/" + assetBundleName;
+            var hotUpdateState = HotUpdateMgr.Instance.State;
+
+            if (hotUpdateState == HotUpdateState.NeverUpdate || hotUpdateState == HotUpdateState.Overrided)
+            {
+                return Application.streamingAssetsPath + "/AssetBundles/" + GetPlatformName() + "/" + assetBundleName;
+            }
+
+            return PersistentAssetBundlesFolder + assetBundleName;
         }
-        
+
+        public static string PersistentAssetBundlesFolder
+        {
+            get { return Application.persistentDataPath + "/AssetBundles/"; }
+        }
+
         public static string GetPlatformName()
         {
 #if UNITY_EDITOR
-                return GetPlatformName(UnityEditor.EditorUserBuildSettings.activeBuildTarget);
+            return GetPlatformName(UnityEditor.EditorUserBuildSettings.activeBuildTarget);
 #else
                 return GetPlatformName(Application.platform);
 #endif

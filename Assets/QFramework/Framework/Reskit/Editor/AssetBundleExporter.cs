@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -10,7 +11,7 @@ namespace QFramework
         [UnityEditor.MenuItem("QFramework/Framework/ResKit/Build AssetBundles", false)]
         static void BuildAssetBundles()
         {
-            var outputPath = Application.streamingAssetsPath + "/AssetBundles/" + ReskitUtil.GetPlatformName();
+            var outputPath = Application.streamingAssetsPath + "/AssetBundles/" + ResKitUtil.GetPlatformName();
 
             if (!Directory.Exists(outputPath))
             {
@@ -19,6 +20,18 @@ namespace QFramework
 
             BuildPipeline.BuildAssetBundles(outputPath, BuildAssetBundleOptions.ChunkBasedCompression,
                 EditorUserBuildSettings.activeBuildTarget);
+
+            var versionConfigFilepath = outputPath + "/ResVersion.json";
+
+            var resVersion = new ResVersion()
+            {
+                Version = 5,
+                AssetBundleNames = AssetDatabase.GetAllAssetBundleNames().ToList(),
+            };
+
+            var resVersionJson = JsonUtility.ToJson(resVersion, true);
+            
+            File.WriteAllText(versionConfigFilepath, resVersionJson);
             
             AssetDatabase.Refresh();
         }

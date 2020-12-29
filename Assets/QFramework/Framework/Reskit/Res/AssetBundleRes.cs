@@ -15,7 +15,7 @@ namespace QFramework
 
         public AssetBundleRes(string assetName)
         {
-            mPath = ReskitUtil.FullPathForAssetBundle(assetName);
+            mPath = ResKitUtil.FullPathForAssetBundle(assetName);
 
             Name = assetName;
 
