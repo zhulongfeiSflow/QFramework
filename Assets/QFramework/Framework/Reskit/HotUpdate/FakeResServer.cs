@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 namespace QFramework
@@ -15,28 +16,54 @@ namespace QFramework
 
     public class FakeResServer : MonoSingleton<FakeResServer>
     {
+        public static string TempAssetBundlesPath
+        {
+            get { return Application.persistentDataPath + "/TempAssetBundles/"; }
+        }
+        
         public void GetRemoteResVersion(Action<int> onRemoteResVersionGet)
         {
-            StartCoroutine(RequestRemoteResVersion(resVersion => { onRemoteResVersionGet(resVersion.Version); }));
+            StartCoroutine(HotUpdateMgr.Instance.Config.RequestRemoteResVersion(resVersion => { onRemoteResVersionGet(resVersion.Version); }));
         }
 
-        public void DownloadRes(Action<ResVersion> onResDownloaded)
+        public void DownloadRes(Action downloadDone)
         {
-            StartCoroutine(RequestRemoteResVersion(onResDownloaded));
+            StartCoroutine(HotUpdateMgr.Instance.Config.RequestRemoteResVersion(remoteResVersion =>
+            {
+                StartCoroutine(DoDownloadRes(remoteResVersion, downloadDone));
+            }));
         }
 
-        private IEnumerator RequestRemoteResVersion(Action<ResVersion> onResDownloaded)
+        public IEnumerator DoDownloadRes(ResVersion remoteResVersion, Action downloadDone)
         {
-            var remoteResVersionPath =
-                Application.dataPath + "/QFramework/Framework/Reskit/HotUpdate/RemoteResVersion.json";
+            //创建临时目录
+            if (!Directory.Exists(TempAssetBundlesPath))
+            {
+                Directory.CreateDirectory(TempAssetBundlesPath);
+            }
+            
+            //保存 ResVersion.json 文件
+            var tempResVersionFilePath = TempAssetBundlesPath + "ResVersion.json";
+            var TempResVersionJson = JsonUtility.ToJson(remoteResVersion);
+            File.WriteAllText(tempResVersionFilePath, TempResVersionJson);
 
-            var www = new WWW(remoteResVersionPath);
-            yield return www;
-            var jsonString = www.text;
+            var remoteBasePath = HotUpdateMgr.Instance.Config.RemoteAssetBundlesURLBase;
+            
+            //补上 AssetBundleMenifest 文件比如:Window
+            remoteResVersion.AssetBundleNames.Add(ResKitUtil.GetPlatformName());
 
-            var resVersion = JsonUtility.FromJson<ResVersion>(jsonString);
+            foreach (var AssetBundleName in remoteResVersion.AssetBundleNames)
+            {
+                var www=new WWW(remoteBasePath + AssetBundleName);
+                yield return www;
 
-            onResDownloaded(resVersion);
+                var bytes = www.bytes;
+
+                var filePath = TempAssetBundlesPath + AssetBundleName;
+                File.WriteAllBytes(filePath, bytes);
+            }
+
+            downloadDone();
         }
     }
 }

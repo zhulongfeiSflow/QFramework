@@ -10,15 +10,10 @@ namespace QFramework
 
             if (hotUpdateState == HotUpdateState.NeverUpdate || hotUpdateState == HotUpdateState.Overrided)
             {
-                return Application.streamingAssetsPath + "/AssetBundles/" + GetPlatformName() + "/" + assetBundleName;
+                return HotUpdateMgr.Instance.Config.LocalAssetBundlesFolder + assetBundleName;
             }
 
-            return PersistentAssetBundlesFolder + assetBundleName;
-        }
-
-        public static string PersistentAssetBundlesFolder
-        {
-            get { return Application.persistentDataPath + "/AssetBundles/"; }
+            return HotUpdateMgr.Instance.Config.HotUpdateAssetBundlesFolder + assetBundleName;
         }
 
         public static string GetPlatformName()

@@ -25,7 +25,7 @@ namespace QFramework
 
             var resVersion = new ResVersion()
             {
-                Version = 5,
+                Version = 15,
                 AssetBundleNames = AssetDatabase.GetAllAssetBundleNames().ToList(),
             };
 

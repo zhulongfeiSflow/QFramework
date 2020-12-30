@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace QFramework
 {
-    public class NewBehaviourScript
+    public class Playground
     {
 #if UNITY_EDITOR
         [UnityEditor.MenuItem("QFramework/Playground")]

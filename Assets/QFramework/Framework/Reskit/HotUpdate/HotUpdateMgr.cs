@@ -32,23 +32,27 @@ namespace QFramework
             get => mState;
         }
 
+        public HotUpdateConfig Config { get; set; }
+
+        private void Awake()
+        {
+            Config = new HotUpdateConfig();
+        }
+
         public void CheckState(Action done)
         {
-            var persistResVersionFilePath = ResKitUtil.PersistentAssetBundlesFolder + "ResVersion.json";
+            var persistResVersion = Config.LoadHotUpdateAssetBundlesFolderResVersion();
 
-            if (!File.Exists(persistResVersionFilePath))
+            if (persistResVersion ==  null)
             {
                 mState = HotUpdateState.NeverUpdate;
                 done();
             }
             else
             {
-                var persistResVersionJson = File.ReadAllText(persistResVersionFilePath);
-                var persistResVersion = JsonUtility.FromJson<ResVersion>(persistResVersionJson);
-
-                StartCoroutine(GetStreamingAssetResVersion(streamingResVersion =>
+                StartCoroutine(Config.GetStreamingAssetResVersion(streamingResVersion =>
                 {
-                    if (persistResVersion.Version > streamingResVersion)
+                    if (persistResVersion.Version > streamingResVersion.Version)
                     {
                         mState = HotUpdateState.Updated;
                     }
@@ -62,31 +66,16 @@ namespace QFramework
             }
         }
 
-        IEnumerator GetStreamingAssetResVersion(Action<int> getResVersion)
-        {
-            var streamingResVersionFilePath = Application.streamingAssetsPath + "/AssetBundles/Windows/ResVersion.json";
-            var www = new WWW(streamingResVersionFilePath);
-            yield return www;
-
-            var resVersion = JsonUtility.FromJson<ResVersion>(www.text);
-            getResVersion(resVersion.Version);
-        }
-
-        public void GetLocalResVersion(Action<int> getLocalResVersion)
+        public void GetLocalResVersion(Action<int> onResult)
         {
             if (mState == HotUpdateState.NeverUpdate || mState == HotUpdateState.Overrided)
             {
-                StartCoroutine(GetStreamingAssetResVersion(streamingResVersion =>
-                {
-                    getLocalResVersion(streamingResVersion);
-                }));
+                StartCoroutine(Config.GetStreamingAssetResVersion(streamingResVersion=>onResult(streamingResVersion.Version)));
                 return;
             }
-
-            var localResVersionPath = ResKitUtil.PersistentAssetBundlesFolder + "ResVersion.json";
-            var jsonString = File.ReadAllText(localResVersionPath);
-            var localResVersion = JsonUtility.FromJson<ResVersion>(jsonString);
-            getLocalResVersion(localResVersion.Version);
+            
+            var localResVersion = Config.LoadHotUpdateAssetBundlesFolderResVersion();
+            onResult(localResVersion.Version);
         }
 
         public void HasNewVersionRes(Action<bool> onResultGetted)
@@ -104,25 +93,31 @@ namespace QFramework
         public void UpdateRes(Action onUpdateDone)
         {
             Debug.Log("开始更新");
-            FakeResServer.Instance.DownloadRes(resVersion =>
+            FakeResServer.Instance.DownloadRes(() =>
             {
-                ReplaceLocalRes(resVersion);
+                ReplaceLocalRes();
                 Debug.Log("结束更新");
+                onUpdateDone();
             });
         }
 
-        void ReplaceLocalRes(ResVersion remoteResVersion)
+        void ReplaceLocalRes()
         {
             Debug.Log("2.替换本地资源");
-            var localResVersionPath = ResKitUtil.PersistentAssetBundlesFolder + "ResVersion.json";
-            var remoteResVersionJson = JsonUtility.ToJson(remoteResVersion);
+            var tempAssetBundleFolders = FakeResServer.TempAssetBundlesPath;
+            var assetBundleFolders = Config.HotUpdateAssetBundlesFolder;
 
-            if (!File.Exists(ResKitUtil.PersistentAssetBundlesFolder))
+            if (File.Exists(assetBundleFolders))
             {
-                Directory.CreateDirectory(ResKitUtil.PersistentAssetBundlesFolder);
+                Directory.Delete(assetBundleFolders, true);
             }
 
-            File.WriteAllText(localResVersionPath, remoteResVersionJson);
+            Directory.Move(tempAssetBundleFolders, assetBundleFolders);
+
+            if (Directory.Exists(tempAssetBundleFolders))
+            {
+                Directory.Delete(tempAssetBundleFolders, true);
+            }
         }
     }
 }
